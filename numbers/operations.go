@@ -10,7 +10,7 @@ const (
 	NoOp  Operation = "?"
 )
 
-var Operations = []Operation{Plus, Minus, Times, Div, NoOp}
+var Operations = []Operation{NoOp, Plus, Minus, Times, Div}
 var OperationsWithoutNoOp = []Operation{Plus, Minus, Times, Div}
 
 // Operate takes an accumulator, an operand, and an operation, and returns the result of the operation.
