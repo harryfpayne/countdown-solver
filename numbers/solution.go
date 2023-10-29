@@ -5,12 +5,14 @@ import "fmt"
 type Solution struct {
 	NumberSequence    []int
 	OperationSequence []Operation
+	BracketSequence   []BracketFull
 }
 
-func NewSolution(numberSequence []int, operationSequence []Operation) Solution {
+func NewSolution(numberSequence []int, operationSequence []Operation, bracketSequence []BracketFull) Solution {
 	return Solution{
 		NumberSequence:    numberSequence,
 		OperationSequence: operationSequence,
+		BracketSequence:   bracketSequence,
 	}
 }
 
@@ -20,26 +22,27 @@ func (s Solution) String() string {
 		if op == NoOp {
 			continue
 		}
-		out = fmt.Sprintf("(%s %s %d )", out, op, s.NumberSequence[i+1])
+		number := s.NumberSequence[i+1]
+		bracket := s.BracketSequence[i+1]
+		switch bracket.Type {
+		case NoBracket:
+			switch op {
+			case Plus, Minus:
+				out = fmt.Sprintf("(%s %s %d)", out, op, number)
+			default:
+				out = fmt.Sprintf("%s %s %d", out, op, number)
+			}
+		case BracketOpen:
+			out = fmt.Sprintf("%s %s (%d", out, op, number)
+		case BracketClose:
+			out = fmt.Sprintf("%s %s %d)", out, op, number)
+		}
 	}
 	return out
 }
 
 func (s Solution) StringMultiLine() string {
-	numbers := s.NumberSequence
-	ops := s.OperationSequence
-
-	out := ""
-	value := numbers[0]
-	for i, op := range ops {
-		if op == NoOp {
-			continue
-		}
-		next, _ := Operate(value, numbers[i+1], op)
-		out += fmt.Sprintf("%d %s %d = %d \n", value, op, numbers[i+1], next)
-		value = next
-	}
-	return out
+	return s.String()
 }
 
 // Niceness - shorter solutions are better
@@ -55,20 +58,4 @@ func (s Solution) Niceness() int {
 		}
 	}
 	return niceness
-}
-
-// Complexity - solutions which use higher numbers are better
-func (s Solution) Complexity() int {
-	highestValue := 0
-	value := s.NumberSequence[0]
-	for i, op := range s.OperationSequence {
-		if op == NoOp {
-			continue
-		}
-		value, _ = Operate(value, s.NumberSequence[i+1], op)
-		if value > highestValue {
-			highestValue = value
-		}
-	}
-	return highestValue
 }
