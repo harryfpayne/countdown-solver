@@ -1,21 +1,19 @@
 package numbers
 
 import (
-	"fmt"
 	"github.com/harryfpayne/countdown-solver/itertools"
 )
 
 var log = false
 var useAllNumbers = false
 
-func Solve(numbers []int, target int, returnChan chan Solution) {
+func Solve(numbers []int, target int, returnChan chan Expression) {
 	gen := itertools.NewPermutationGenerator(numbers)
 	operations := Operations
 	if useAllNumbers {
 		operations = OperationsWithoutNoOp
 	}
 
-	optionCount := 0
 	for gen.Next() {
 		permutation := gen.Get()
 		opGen := itertools.NewCombinationGenerator(operations, len(numbers)-1)
@@ -30,7 +28,6 @@ func Solve(numbers []int, target int, returnChan chan Solution) {
 				if !IsValidBracketSequence(brackets) {
 					continue
 				}
-				optionCount++
 
 				bracketSequence := GetBracketSequence(
 					append(
@@ -39,12 +36,13 @@ func Solve(numbers []int, target int, returnChan chan Solution) {
 					),
 				)
 
-				value, ok := Calculate(permutation, ops, bracketSequence)
+				expr := NewExpression(permutation, ops, bracketSequence)
+				value, ok := expr.Evaluate(WithWorkingOut)
 				if !ok {
 					continue
 				}
 				if value == target {
-					returnChan <- NewSolution(permutation, ops, bracketSequence)
+					returnChan <- expr
 					// Found a solution, don't need to check more brackets
 					break BracketLoop
 				}
@@ -52,75 +50,4 @@ func Solve(numbers []int, target int, returnChan chan Solution) {
 		}
 	}
 	close(returnChan)
-	fmt.Println("Looked through: ", optionCount, "options")
-}
-
-func Calculate(numbers []int, operations []Operation, brackets []BracketFull) (int, bool) {
-	return CalculateRec(numbers, operations, brackets, 0)
-}
-
-func CalculateRec(numbers []int, operations []Operation, brackets []BracketFull, indexOffset int) (int, bool) {
-	value := numbers[0]
-	var ok bool
-
-	if log {
-		fmt.Println("Starting expression: ", numbers, operations, brackets)
-	}
-
-	for i := 0; i < len(operations); i++ {
-		op := operations[i]
-		bracket := brackets[i+1]
-		number := numbers[i+1]
-		if log {
-			fmt.Println("current op: ", number, op, bracket)
-		}
-
-		if bracket.Type == BracketOpen {
-			if log {
-				fmt.Println("bracket open")
-			}
-			// calculate sub expression
-			closeBracketIndex := bracket.CorrespondingBracketIndex - indexOffset
-			numbersSub := numbers[i+1 : closeBracketIndex+1]
-			operationsSub := operations[i+1 : closeBracketIndex]
-			bracketsSub := brackets[i+1 : closeBracketIndex+1]
-			if log {
-				fmt.Println("sub expression: ", numbersSub, operationsSub, bracketsSub)
-			}
-			subVal, ok := CalculateRec(numbersSub, operationsSub, bracketsSub, i+1)
-			if !ok {
-				return 0, false
-			}
-			if log {
-				fmt.Println("sub value: ", subVal)
-			}
-			value, ok = Operate(value, subVal, op)
-			if !ok { // Invalid operation (bad division), so skip to next operation set
-				if log {
-					fmt.Println("invalid operation")
-				}
-				return 0, false
-			}
-			if log {
-				fmt.Println("new value: ", value)
-			}
-			i = closeBracketIndex - 1
-			if log {
-				fmt.Println("skipping to: ", i)
-			}
-			continue
-		}
-
-		value, ok = Operate(value, number, op)
-		if !ok { // Invalid operation (bad division), so skip to next operation set
-			if log {
-				fmt.Println("invalid operation")
-			}
-			return 0, false
-		}
-		if log {
-			fmt.Println("new value: ", value)
-		}
-	}
-	return value, true
 }

@@ -12,19 +12,19 @@ import (
 func main() {
 	nums, target := ReadArgs()
 	fmt.Println("Trying to get to", target, "using", nums)
-	returnChan := make(chan numbers.Solution)
+	returnChan := make(chan numbers.Expression)
 	t := time.Now()
 	go numbers.Solve(nums, target, returnChan)
-	go func(returnChan chan numbers.Solution) { // Exit with timeout
+	go func(returnChan chan numbers.Expression) { // Exit with timeout
 		<-time.After(28 * time.Second)
 		close(returnChan)
 	}(returnChan)
 
-	var solutions []numbers.Solution
+	var solutions []numbers.Expression
 	for solution := range returnChan {
 		if len(solutions) == 0 {
 			fmt.Println("First solution found:")
-			fmt.Println(solution)
+			fmt.Println(solution.WorkingOut)
 		}
 		solutions = append(solutions, solution)
 	}
@@ -42,7 +42,7 @@ func main() {
 		}
 	}
 	fmt.Println("Nicest solution:")
-	fmt.Println(nicestSolution)
+	fmt.Println(nicestSolution.WorkingOut)
 }
 
 var AllowedNumbers = [...]int{
