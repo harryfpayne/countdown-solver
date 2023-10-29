@@ -1,7 +1,6 @@
 package numbers
 
 import (
-	"fmt"
 	"github.com/harryfpayne/countdown-solver/itertools"
 )
 
@@ -34,17 +33,4 @@ func Solve(numbers []int, target int, useAllNumbers bool) []Solution {
 		}
 	}
 	return solutions
-}
-
-func Print(numbers []int, ops []Operation) {
-	fmt.Println("------------------------")
-	value := numbers[0]
-	for i, op := range ops {
-		if op == NoOp {
-			continue
-		}
-		next, _ := Operate(value, numbers[i+1], op)
-		fmt.Println(fmt.Sprintf("%d %s %d = %d", value, op, numbers[i+1], next))
-		value = next
-	}
 }
