@@ -2,15 +2,69 @@ package main
 
 import (
 	"fmt"
+	"github.com/harryfpayne/countdown-solver/letters"
 	"github.com/harryfpayne/countdown-solver/numbers"
-	"math/rand"
-	"os"
-	"strconv"
+	"github.com/harryfpayne/countdown-solver/utils"
+	"sort"
 	"time"
 )
 
 func main() {
-	nums, target := ReadArgs()
+	args := utils.ReadArgs()
+	if args.Numbers != nil {
+		numbersRound(args)
+	} else {
+		lettersRound(args)
+	}
+}
+
+func lettersRound(args utils.Args) {
+	returnChan := make(chan string)
+	fmt.Println("Trying to find words using:", string(args.Letters))
+	t := time.Now()
+	go letters.Solve(args.Letters, returnChan)
+
+	var solutionsMap = make(map[string]struct{})
+	for word := range returnChan {
+		solutionsMap[word] = struct{}{}
+	}
+	if len(solutionsMap) == 0 {
+		fmt.Println("No solutions found")
+		return
+	}
+	var solutions []string
+	for word := range solutionsMap {
+		solutions = append(solutions, word)
+	}
+	fmt.Println("Found", len(solutions), "in", time.Since(t))
+
+	sort.Slice(solutions, func(i, j int) bool {
+		return len(solutions[i]) > len(solutions[j])
+	})
+
+	var longestFound int
+	var firstFailure bool
+	for _, word := range solutions {
+		info, ok := letters.GetWordInfo(word)
+		if !ok {
+			if !firstFailure {
+				fmt.Println("\nGot", word, "but can't find it's meaning")
+				firstFailure = true
+			}
+			continue
+		}
+		fmt.Println("\n", info)
+		if longestFound == 0 {
+			longestFound = len(word)
+		}
+		if len(word) != longestFound {
+			break
+		}
+	}
+}
+
+func numbersRound(args utils.Args) {
+	nums, target := args.Numbers, args.Target
 	fmt.Println("Trying to get to", target, "using", nums)
 	returnChan := make(chan numbers.Expression)
 	t := time.Now()
@@ -43,51 +97,4 @@ func main() {
 	}
 	fmt.Println("Nicest solution:")
 	fmt.Println(nicestSolution.WorkingOut)
-}
-
-var AllowedNumbers = [...]int{
-	1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10,
-	25, 50, 75, 100,
-}
-
-func ReadArgs() ([]int, int) {
-	if len(os.Args) == 1 {
-		fmt.Println("No arguments provided, using random numbers")
-		return RandomNumbers()
-	}
-	argsWithoutProg := os.Args[1:]
-	nums := make([]int, len(argsWithoutProg)-1)
-	var err error
-	for i, arg := range argsWithoutProg[:len(argsWithoutProg)-1] {
-		// convert arg to int
-		nums[i], err = strconv.Atoi(arg)
-		if err != nil {
-			fmt.Println("Error parsing number", arg)
-			os.Exit(1)
-		}
-	}
-
-	target, err := strconv.Atoi(argsWithoutProg[len(argsWithoutProg)-1])
-	if err != nil {
-		fmt.Println("Error parsing target", argsWithoutProg[len(argsWithoutProg)-1])
-		os.Exit(1)
-	}
-	return nums, target
-}
-
-func RandomNumbers() ([]int, int) {
-	nums := make([]int, 6)
-ILoop:
-	for i := range nums {
-		// Random number from AllowedNumbers
-		// No repeats
-		nums[i] = AllowedNumbers[rand.Intn(len(AllowedNumbers))]
-		for j := 0; j < i; j++ {
-			if nums[i] == nums[j] {
-				i--
-				continue ILoop
-			}
-		}
-	}
-	return nums, rand.Intn(900) + 100
 }
