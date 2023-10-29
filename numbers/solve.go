@@ -15,6 +15,7 @@ func Solve(numbers []int, target int, returnChan chan Solution) {
 		operations = OperationsWithoutNoOp
 	}
 
+	optionCount := 0
 	for gen.Next() {
 		permutation := gen.Get()
 		opGen := itertools.NewCombinationGenerator(operations, len(numbers)-1)
@@ -23,11 +24,13 @@ func Solve(numbers []int, target int, returnChan chan Solution) {
 			ops := opGen.Get()
 
 			bracketGen := itertools.NewCombinationGenerator(Brackets, len(numbers)-1)
+		BracketLoop:
 			for bracketGen.Next() {
 				brackets := bracketGen.Get()
 				if !IsValidBracketSequence(brackets) {
 					continue
 				}
+				optionCount++
 
 				bracketSequence := GetBracketSequence(
 					append(
@@ -42,11 +45,14 @@ func Solve(numbers []int, target int, returnChan chan Solution) {
 				}
 				if value == target {
 					returnChan <- NewSolution(permutation, ops, bracketSequence)
+					// Found a solution, don't need to check more brackets
+					break BracketLoop
 				}
 			}
 		}
 	}
 	close(returnChan)
+	fmt.Println("Looked through: ", optionCount, "options")
 }
 
 func Calculate(numbers []int, operations []Operation, brackets []BracketFull) (int, bool) {

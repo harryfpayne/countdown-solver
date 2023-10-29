@@ -16,23 +16,23 @@ func main() {
 	t := time.Now()
 	go numbers.Solve(nums, target, returnChan)
 	go func(returnChan chan numbers.Solution) { // Exit with timeout
-		<-time.After(30 * time.Second)
+		<-time.After(28 * time.Second)
 		close(returnChan)
 	}(returnChan)
 
 	var solutions []numbers.Solution
 	for solution := range returnChan {
 		if len(solutions) == 0 {
-			fmt.Println("First solution found:", solution)
+			fmt.Println("First solution found:")
+			fmt.Println(solution)
 		}
 		solutions = append(solutions, solution)
 	}
-	fmt.Println("Time taken:", time.Since(t))
-
 	if len(solutions) == 0 {
 		fmt.Println("No solutions found")
 		return
 	}
+	fmt.Println("Found", len(solutions), "in", time.Since(t))
 
 	nicestSolution := solutions[0]
 	for _, solution := range solutions {
@@ -41,9 +41,8 @@ func main() {
 			nicestSolution = solution
 		}
 	}
-
-	fmt.Println("Found", len(solutions), "solutions")
-	fmt.Println("Nicest solution:", nicestSolution)
+	fmt.Println("Nicest solution:")
+	fmt.Println(nicestSolution)
 }
 
 var AllowedNumbers = [...]int{
@@ -90,5 +89,5 @@ ILoop:
 			}
 		}
 	}
-	return nums, rand.Intn(1100) + 100
+	return nums, rand.Intn(900) + 100
 }
