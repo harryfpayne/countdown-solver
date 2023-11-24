@@ -1,11 +1,12 @@
-package utils
+package main
 
 import (
 	"fmt"
 	"math/rand"
-	"os"
 	"strconv"
 )
+
+var invalidArgsError = fmt.Errorf("invalid arguments")
 
 var AllowedNumbers = [...]int{
 	1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10,
@@ -18,43 +19,40 @@ type Args struct {
 	Letters []rune
 }
 
-func ReadArgs() Args {
-	if len(os.Args) == 1 {
+func ParseArgs(args []string) (Args, error) {
+	if len(args) == 0 {
 		fmt.Println("No arguments provided, using random numbers")
 		nums, target := RandomNumbers()
 		return Args{
 			Numbers: nums,
 			Target:  target,
-		}
+		}, nil
 	}
 
-	nums, target, ok := ReadArgsAsNumbersRound()
+	nums, target, ok := ReadArgsAsNumbersRound(args)
 	if ok {
-		return Args{Numbers: nums, Target: target}
+		return Args{Numbers: nums, Target: target}, nil
 	}
 
-	letters, ok := ReadArgsAsLetters()
+	letters, ok := ReadArgsAsLetters(args)
 	if ok {
-		return Args{Letters: letters}
+		return Args{Letters: letters}, nil
 	}
 
-	fmt.Println("Invalid arguments provided")
-	os.Exit(1)
-	return Args{}
+	return Args{}, invalidArgsError
 }
 
-func ReadArgsAsLetters() ([]rune, bool) {
-	argsWithoutProg := os.Args[1:]
-	if len(argsWithoutProg) == 1 {
+func ReadArgsAsLetters(args []string) ([]rune, bool) {
+	if len(args) == 1 {
 		var letters []rune
-		for _, letter := range argsWithoutProg[0] {
+		for _, letter := range args[0] {
 			letters = append(letters, letter)
 		}
 		return letters, true
 	}
 
-	letters := make([]rune, len(argsWithoutProg))
-	for i, arg := range argsWithoutProg {
+	letters := make([]rune, len(args))
+	for i, arg := range args {
 		// convert arg to rune
 		letters[i] = []rune(arg)[0]
 		// is alpha
@@ -66,11 +64,10 @@ func ReadArgsAsLetters() ([]rune, bool) {
 
 }
 
-func ReadArgsAsNumbersRound() ([]int, int, bool) {
-	argsWithoutProg := os.Args[1:]
-	nums := make([]int, len(argsWithoutProg)-1)
+func ReadArgsAsNumbersRound(args []string) ([]int, int, bool) {
+	nums := make([]int, len(args)-1)
 	var err error
-	for i, arg := range argsWithoutProg[:len(argsWithoutProg)-1] {
+	for i, arg := range args[:len(args)-1] {
 		// convert arg to int
 		nums[i], err = strconv.Atoi(arg)
 		if err != nil {
@@ -78,7 +75,7 @@ func ReadArgsAsNumbersRound() ([]int, int, bool) {
 		}
 	}
 
-	target, err := strconv.Atoi(argsWithoutProg[len(argsWithoutProg)-1])
+	target, err := strconv.Atoi(args[len(args)-1])
 	if err != nil {
 		return nil, 0, false
 	}

@@ -1,16 +1,14 @@
 package numbers
 
 import (
+	"github.com/harryfpayne/countdown-solver/config"
 	"github.com/harryfpayne/countdown-solver/itertools"
 )
 
-var log = false
-var useAllNumbers = false
-
-func Solve(numbers []int, target int, returnChan chan Expression) {
+func Solve(cfg config.Config, numbers []int, target int, returnChan chan Expression) {
 	gen := itertools.NewPermutationGenerator(numbers)
 	operations := Operations
-	if useAllNumbers {
+	if cfg.UseAllNumbers {
 		operations = OperationsWithoutNoOp
 	}
 

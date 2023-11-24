@@ -1,14 +1,21 @@
 package letters
 
 import (
-	"bufio"
+	_ "embed"
+	"github.com/harryfpayne/countdown-solver/config"
 	"github.com/harryfpayne/countdown-solver/itertools"
-	"os"
+	"log/slog"
 	"slices"
+	"sort"
+	"strings"
 )
 
-func Solve(letters []rune, resultChan chan string) {
-	words := openfile()
+//go:embed words_alpha.txt
+var words string
+
+func Solve(cfg config.Config, letters []rune, resultChan chan string) {
+	words := parseFile()
+	slog.Debug("Loaded", "count", len(words))
 
 	permutationGen := itertools.NewPermutationGenerator(letters)
 	for permutationGen.Next() {
@@ -31,27 +38,17 @@ func Solve(letters []rune, resultChan chan string) {
 	close(resultChan)
 }
 
-func openfile() []string {
-	f, err := os.Open("words_alpha.txt")
-	if err != nil {
-		panic(err)
-	}
-	defer func(f *os.File) {
-		err := f.Close()
-		if err != nil {
-			panic(err)
-		}
-	}(f)
-
-	scanner := bufio.NewScanner(f)
-
+func parseFile() []string {
 	var lines []string
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
+	for _, word := range strings.Split(words, "\n") {
+		lines = append(lines, word)
 	}
-
-	if err := scanner.Err(); err != nil {
-		panic(err)
-	}
+	sortWords(lines)
 	return lines
+}
+
+func sortWords(words []string) {
+	sort.Slice(words, func(i, j int) bool {
+		return len(words[i]) < len(words[j])
+	})
 }
