@@ -7,6 +7,7 @@ import (
 type Config struct {
 	Timeout       time.Duration
 	UseAllNumbers bool
+	UseBrackets   bool
 	Debug         bool
 }
 

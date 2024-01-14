@@ -19,6 +19,19 @@ func Solve(cfg config.Config, numbers []int, target int, returnChan chan Express
 		for opGen.Next() {
 			ops := opGen.Get()
 
+			expr := NewExpression(permutation, ops, make([]BracketFull, len(ops)+1))
+			value, ok := expr.Evaluate(WithWorkingOut)
+			if !ok {
+				continue
+			}
+			if value == target {
+				returnChan <- expr
+				continue
+			}
+			if !cfg.UseBrackets {
+				continue
+			}
+
 			bracketGen := itertools.NewCombinationGenerator(Brackets, len(numbers)-1)
 		BracketLoop:
 			for bracketGen.Next() {

@@ -16,6 +16,7 @@ var words string
 func Solve(cfg config.Config, letters []rune, resultChan chan string) {
 	words := parseFile()
 	slog.Debug("Loaded", "count", len(words))
+	slices.Sort(words)
 
 	permutationGen := itertools.NewPermutationGenerator(letters)
 	for permutationGen.Next() {
@@ -41,7 +42,7 @@ func Solve(cfg config.Config, letters []rune, resultChan chan string) {
 func parseFile() []string {
 	var lines []string
 	for _, word := range strings.Split(words, "\n") {
-		lines = append(lines, word)
+		lines = append(lines, strings.TrimSpace(word))
 	}
 	sortWords(lines)
 	return lines

@@ -16,8 +16,11 @@ import (
 var Port = 8080
 
 func main() {
-	http.HandleFunc("/letters", lettersHandler)
-	http.HandleFunc("/numbers", numbersHandler)
+	fs := http.FileServer(http.Dir("./client/build"))
+
+	http.Handle("/", fs)
+	http.HandleFunc("/api/letters", lettersHandler)
+	http.HandleFunc("/api/numbers", numbersHandler)
 	fmt.Println("Listening on port", Port)
 	err := http.ListenAndServe(fmt.Sprintf(":%d", Port), nil)
 	if err != nil {
